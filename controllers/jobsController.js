@@ -41,6 +41,46 @@ module.exports.getJobsInRadius = async (req, res, next) => {
     data: jobs
   })
 }
+
+//delete job by id =>/api/v1/jobs/:id
+module.exports.deleteJob = async (req, res, next) => {
+  const { id } = req.params
+
+  let job = await Job.findById(id)
+  if (!job)
+    res.status(404).json({
+      success: false,
+      message: "Job not found"
+    })
+  else {
+    await Job.findByIdAndDelete(req.params.id)
+
+    res.status(200).json({
+      success: true,
+      message: "Job deleted"
+    })
+  }
+}
+// Get a single job with id and slug   =>  /api/v1/job/:id/:slug
+exports.getJob = async (req, res, next) => {
+  console.log(req.params.id)
+  console.log(req.params.slug)
+
+  const job = await Job.find({ $and: [{ _id: req.params.id }, { slug: req.params.slug }] })
+
+  if (!job)
+    res.status(404).json({
+      success: false,
+      message: "Job not found"
+    })
+  else {
+    res.status(200).json({
+      success: true,
+      data: job
+    })
+  }
+}
+
 //update job by id =>/api/v1/jobs/:id
 module.exports.updateJob = async (req, res, next) => {
   const { id } = req.params
