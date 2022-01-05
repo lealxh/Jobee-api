@@ -1,27 +1,29 @@
 const Job = require("../models/job")
 const geocoder = require("../utils/geocoder")
+const ErrorHandler = require("../utils/ErrorHandler")
+const CatchAsyncErrors = require("../middlewares/CatchAsyncErrors")
 
 //get all jobs=> /api/v1/jobs
-exports.getJobs = async (req, res, next) => {
+exports.getJobs = CatchAsyncErrors(async (req, res, next) => {
   const allJobs = await Job.find()
   res.status(200).json({
     success: true,
     message: "This route will show all jobs",
     data: allJobs
   })
-}
+})
 
 //create a new Job => /api/v1/job/new
-exports.newJob = async (req, res, next) => {
+exports.newJob = CatchAsyncErrors(async (req, res, next) => {
   const jobData = await Job.create(req.body)
   res.status(200).json({
     success: true,
     message: "Job created",
     data: jobData
   })
-}
+})
 //serch jobs in radius =>/api/v1/jobs/:zipcode/:distance
-module.exports.getJobsInRadius = async (req, res, next) => {
+module.exports.getJobsInRadius = CatchAsyncErrors(async (req, res, next) => {
   const { zipcode, distance } = req.params
 
   //getting latitude and longitude with geocoder
@@ -40,10 +42,9 @@ module.exports.getJobsInRadius = async (req, res, next) => {
     results: jobs.length,
     data: jobs
   })
-}
-
+})
 //delete job by id =>/api/v1/jobs/:id
-module.exports.deleteJob = async (req, res, next) => {
+module.exports.deleteJob = CatchAsyncErrors(async (req, res, next) => {
   const { id } = req.params
 
   let job = await Job.findById(id)
@@ -60,9 +61,9 @@ module.exports.deleteJob = async (req, res, next) => {
       message: "Job deleted"
     })
   }
-}
+})
 // Get a single job with id and slug   =>  /api/v1/job/:id/:slug
-exports.getJob = async (req, res, next) => {
+exports.getJob = CatchAsyncErrors(async (req, res, next) => {
   console.log(req.params.id)
   console.log(req.params.slug)
 
@@ -79,11 +80,10 @@ exports.getJob = async (req, res, next) => {
       data: job
     })
   }
-}
-
+})
 // Get Job stats   =>  /api/v1/stats/:topic
 //needs this index db.jobs.createIndex({title:"text"})
-exports.getStats = async (req, res, next) => {
+exports.getStats = CatchAsyncErrors(async (req, res, next) => {
   console.log(req.params.topic)
   const stats = await Job.aggregate([
     {
@@ -111,28 +111,26 @@ exports.getStats = async (req, res, next) => {
       success: true,
       data: stats
     })
-}
+})
 
 //update job by id =>/api/v1/jobs/:id
-module.exports.updateJob = async (req, res, next) => {
+module.exports.updateJob = CatchAsyncErrors(async (req, res, next) => {
   const { id } = req.params
-
+  console.log(process.env.NODE_ENV)
   let job = await Job.findById(id)
 
-  if (!job)
-    res.status(404).json({
-      success: false,
-      message: "Job not found"
-    })
-  else {
+  if (!job) {
+    return next(new ErrorHandler("Job not found", 404))
+  } else {
     job = await Job.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     })
+
     res.status(200).json({
       success: true,
       message: "Job updated",
       data: job
     })
   }
-}
+})

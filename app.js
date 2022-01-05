@@ -1,6 +1,7 @@
 const express = require("express")
 const app = express()
 const dotenv = require("dotenv")
+const ErrorMiddleware = require("./middlewares/Errors")
 
 //setting up config
 dotenv.config({ path: "./config/config.env" })
@@ -16,6 +17,9 @@ app.use(express.json())
 //importing routes
 const jobs = require("./routes/jobs")
 app.use("/api/v1", jobs)
+
+//midleware to handle errors
+app.use(ErrorMiddleware)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
