@@ -81,6 +81,38 @@ exports.getJob = async (req, res, next) => {
   }
 }
 
+// Get Job stats   =>  /api/v1/stats/:topic
+//needs this index db.jobs.createIndex({title:"text"})
+exports.getStats = async (req, res, next) => {
+  console.log(req.params.topic)
+  const stats = await Job.aggregate([
+    {
+      $match: { $text: { $search: '"' + req.params.topic + '"' } }
+    },
+    {
+      $group: {
+        _id: { $toUpper: "$experience" },
+        totalJobs: { $sum: 1 },
+        avgPosition: { $avg: "$positions" },
+        avgSalary: { $avg: "$salary" },
+        minSalary: { $min: "$salary" },
+        maxSalary: { $max: "$salary" }
+      }
+    }
+  ])
+
+  if (stats.length === 0)
+    res.status(200).json({
+      success: false,
+      message: `No results found for ${req.params.topic}`
+    })
+  else
+    res.status(200).json({
+      success: true,
+      data: stats
+    })
+}
+
 //update job by id =>/api/v1/jobs/:id
 module.exports.updateJob = async (req, res, next) => {
   const { id } = req.params
