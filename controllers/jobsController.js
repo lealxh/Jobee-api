@@ -2,14 +2,21 @@ const Job = require("../models/job")
 const geocoder = require("../utils/geocoder")
 const ErrorHandler = require("../utils/ErrorHandler")
 const CatchAsyncErrors = require("../middlewares/CatchAsyncErrors")
+const ApiFilters = require("../utils/ApiFilters")
 
 //get all jobs=> /api/v1/jobs
 exports.getJobs = CatchAsyncErrors(async (req, res, next) => {
-  const allJobs = await Job.find()
+  const apiFilter = new ApiFilters(Job.find(), req.query).filter()
+
+  const jobs = await apiFilter.query
+  if (!jobs) {
+    return next(new ErrorHandler("Job not found", 404))
+  }
+
   res.status(200).json({
     success: true,
-    message: "This route will show all jobs",
-    data: allJobs
+    results: jobs.length,
+    data: jobs
   })
 })
 
