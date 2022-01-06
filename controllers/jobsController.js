@@ -6,7 +6,7 @@ const ApiFilters = require("../utils/ApiFilters")
 
 //get all jobs=> /api/v1/jobs
 exports.getJobs = CatchAsyncErrors(async (req, res, next) => {
-  const apiFilter = new ApiFilters(Job.find(), req.query).filter()
+  const apiFilter = new ApiFilters(Job.find(), req.query).filter().sort().fields().searchByQuery().pagination()
 
   const jobs = await apiFilter.query
   if (!jobs) {
