@@ -77,7 +77,7 @@ module.exports.deleteJob = CatchAsyncErrors(async (req, res, next) => {
 })
 // Get a single job with id and slug   =>  /api/v1/job/:id/:slug
 exports.getJob = CatchAsyncErrors(async (req, res, next) => {
-  const job = await Job.find({ $and: [{ _id: req.params.id }, { slug: req.params.slug }] })
+  const job = await Job.find({ $and: [{ _id: req.params.id }, { slug: req.params.slug }] }).populate({ path: "user", select: "name" })
 
   if (!job)
     res.status(404).json({

@@ -6,6 +6,7 @@ const sendToken = require("../utils/jwtoken")
 const path = require("path")
 const fs = require("fs")
 const { json } = require("express/lib/response")
+const APIFilters = require("../utils/ApiFilters")
 
 // Get current user profile   =>    /api/v1/me
 exports.getUserProfile = CatchAsyncErrors(async (req, res, next) => {
@@ -116,5 +117,37 @@ exports.getPublishedJobs = CatchAsyncErrors(async (req, res, next) => {
     success: true,
     results: jobs.length,
     data: jobs
+  })
+})
+
+// Adding controller methods that only accessible by admins
+
+// Show all users  =>   /api/v1/users
+exports.getUsers = CatchAsyncErrors(async (req, res, next) => {
+  const apiFilters = new APIFilters(User.find(), req.query).filter().sort().fields().pagination()
+
+  const users = await apiFilters.query
+
+  res.status(200).json({
+    success: true,
+    results: users.length,
+    data: users
+  })
+})
+
+// Delete User(Admin)   =>   /api/v1/user/:id
+exports.deleteUserAdmin = CatchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.params.id)
+
+  if (!user) {
+    return next(new ErrorHandler(`User not found with id: ${req.params.id}`, 404))
+  }
+
+  deleteUserData(user.id, user.role)
+  await user.remove()
+
+  res.status(200).json({
+    success: true,
+    message: "User is deleted by Admin."
   })
 })
