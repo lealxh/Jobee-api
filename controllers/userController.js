@@ -1,15 +1,19 @@
 const User = require("../models/user")
+const Job = require("../models/job")
 const CatchAsyncErrors = require("../middlewares/CatchAsyncErrors")
 const ErrorHandler = require("../utils/ErrorHandler")
 const sendToken = require("../utils/jwtoken")
+const path = require("path")
+const fs = require("fs")
+const { json } = require("express/lib/response")
 
 // Get current user profile   =>    /api/v1/me
 exports.getUserProfile = CatchAsyncErrors(async (req, res, next) => {
-  const user = await User.findById(req.user.id)
-  //.populate({
-  //   path: "jobsPublished",
-  //   select: "title postingDate"
-  // })
+  const user = await User.findById(req.user.id).populate({
+    //to include virtual fields
+    path: "jobsPublished",
+    select: "title postingDate"
+  })
 
   res.status(200).json({
     success: true,
@@ -54,7 +58,7 @@ exports.updateUser = CatchAsyncErrors(async (req, res, next) => {
 
 // Delete current user   =>    /api/v1/me/delete
 exports.deleteUser = CatchAsyncErrors(async (req, res, next) => {
-  // deleteUserData(req.user.id, req.user.role);
+  deleteUserData(req.user.id, req.user.role)
 
   const user = await User.findByIdAndDelete(req.user.id)
 
@@ -68,3 +72,27 @@ exports.deleteUser = CatchAsyncErrors(async (req, res, next) => {
     message: "Your account has been deleted."
   })
 })
+
+// Delete user files and employeer jobs
+async function deleteUserData(user, role) {
+  if (role === "employeer") {
+    await Job.deleteMany({ user: user })
+  }
+
+  if (role === "user") {
+    const appliedJobs = await Job.find({ "applicantsApplied.id": user }).select("+applicantsApplied").select("+user")
+
+    for (let i = 0; i < appliedJobs.length; i++) {
+      let obj = appliedJobs[i].applicantsApplied.find(o => o.id === user)
+
+      let filepath = `${__dirname}/public/uploads/${obj.resume}`.replace("\\controllers", "")
+      fs.unlink(filepath, err => {
+        if (err) return console.log(err)
+      })
+
+      appliedJobs[i].applicantsApplied.splice(appliedJobs[i].applicantsApplied.indexOf(obj.id))
+
+      await appliedJobs[i].save()
+    }
+  }
+}

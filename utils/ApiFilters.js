@@ -6,17 +6,14 @@ class ApiFilters {
 
   filter() {
     const queryCopy = { ...this.queryStr }
-    console.log(queryCopy)
+
     const removeFields = ["sort", "fields", "q", "limit", "page"]
     removeFields.forEach(el => delete queryCopy[el])
-    console.log(queryCopy)
 
     // Advance filter using: lt, lte, gt, gte
     let queryStr = JSON.stringify(queryCopy)
 
-    console.log(queryStr.match(/\b(gt|gte|lt|lte|in)\b/g))
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`)
-    console.log(queryStr)
     this.query = this.query.find(JSON.parse(queryStr))
     return this
   }

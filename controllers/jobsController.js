@@ -27,7 +27,6 @@ exports.getJobs = CatchAsyncErrors(async (req, res, next) => {
 exports.newJob = CatchAsyncErrors(async (req, res, next) => {
   //Adding user to body
   req.body.user = req.user.id
-  console.log(req.user)
 
   const jobData = await Job.create(req.body)
   res.status(200).json({
@@ -78,9 +77,6 @@ module.exports.deleteJob = CatchAsyncErrors(async (req, res, next) => {
 })
 // Get a single job with id and slug   =>  /api/v1/job/:id/:slug
 exports.getJob = CatchAsyncErrors(async (req, res, next) => {
-  console.log(req.params.id)
-  console.log(req.params.slug)
-
   const job = await Job.find({ $and: [{ _id: req.params.id }, { slug: req.params.slug }] })
 
   if (!job)
