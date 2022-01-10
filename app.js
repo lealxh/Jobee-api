@@ -4,6 +4,7 @@ const dotenv = require("dotenv")
 const cookieParser = require("cookie-parser")
 const ErrorMiddleware = require("./middlewares/Errors")
 const ErrorHandler = require("./utils/errorHandler")
+const fileUpload = require("express-fileupload")
 
 //setting up config
 dotenv.config({ path: "./config/config.env" })
@@ -27,6 +28,9 @@ app.use(express.json())
 
 //set up cookie parser
 app.use(cookieParser())
+
+//set up file uploader
+app.use(fileUpload())
 
 //importing routes
 const jobs = require("./routes/jobs")
