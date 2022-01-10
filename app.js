@@ -1,6 +1,7 @@
 const express = require("express")
 const app = express()
 const dotenv = require("dotenv")
+const cookieParser = require("cookie-parser")
 const ErrorMiddleware = require("./middlewares/Errors")
 const ErrorHandler = require("./utils/errorHandler")
 
@@ -24,9 +25,14 @@ connectDatabase()
 //set body parser
 app.use(express.json())
 
+//set up cookie parser
+app.use(cookieParser())
+
 //importing routes
 const jobs = require("./routes/jobs")
+const auth = require("./routes/auth")
 app.use("/api/v1", jobs)
+app.use("/api/v1", auth)
 
 app.all("*", (req, res, next) => {
   next(new ErrorHandler(`${req.originalUrl} route not found`, 404))
