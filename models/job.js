@@ -94,6 +94,11 @@ const jobSchema = new mongoose.Schema({
     state: String,
     zipcode: String,
     country: String
+  },
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: "User",
+    required: true
   }
 })
 //creating job slug before saving
