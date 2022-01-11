@@ -11,6 +11,8 @@ const mongoSanitize = require("express-mongo-sanitize")
 const xssClean = require("xss-clean")
 const hpp = require("hpp")
 const cors = require("cors")
+const bodyParser = require("body-parser")
+
 //setting up config
 dotenv.config({ path: "./config/config.env" })
 
@@ -33,6 +35,10 @@ app.use(helmet())
 
 //set body parser
 app.use(express.json())
+
+//to allow html index
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.static("public"))
 
 //sanitize data
 app.use(mongoSanitize())
