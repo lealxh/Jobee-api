@@ -29,8 +29,6 @@ class ApiFilters {
   }
 
   fields() {
-    console.log(this.queryStr.fields)
-
     if (this.queryStr.fields) {
       const fields = this.queryStr.fields.split(",").join(" ")
       console.log(`Fields: ${fields}`)
