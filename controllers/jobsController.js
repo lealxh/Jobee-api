@@ -11,7 +11,7 @@ const fs = require("fs")
 exports.getJobs = CatchAsyncErrors(async (req, res, next) => {
   const apiFilter = new ApiFilters(Job.find(), req.query).filter().sort().fields().searchByQuery().pagination()
 
-  const jobs = await apiFilter.query
+  const jobs = await apiFilter.query.populate({ path: "user", select: "name" })
   if (!jobs) {
     return next(new ErrorHandler("Job not found", 404))
   }
@@ -60,20 +60,32 @@ module.exports.getJobsInRadius = CatchAsyncErrors(async (req, res, next) => {
 module.exports.deleteJob = CatchAsyncErrors(async (req, res, next) => {
   const { id } = req.params
 
-  let job = await Job.findById(id)
-  if (!job)
-    res.status(404).json({
-      success: false,
-      message: "Job not found"
-    })
-  else {
-    await Job.findByIdAndDelete(req.params.id)
+  let job = await Job.findById(id).select("+applicantsApplied")
+  if (!job) {
+    return next(new ErrorHandler("Job not found", 404))
+  }
 
-    res.status(200).json({
-      success: true,
-      message: "Job deleted"
+  // Check if the user is owner
+  if (job.user.toString() !== req.user.id && req.user.role !== "admin") {
+    return next(new ErrorHandler(`User(${req.user.id}) is not allowed to delete this job.`))
+  }
+
+  // Deleting files associated with job
+
+  for (let i = 0; i < job.applicantsApplied.length; i++) {
+    let filepath = `${__dirname}/public/uploads/${job.applicantsApplied[i].resume}`.replace("\\controllers", "")
+
+    fs.unlink(filepath, err => {
+      if (err) return console.log(err)
     })
   }
+
+  await Job.findByIdAndDelete(req.params.id)
+
+  res.status(200).json({
+    success: true,
+    message: "Job deleted"
+  })
 })
 // Get a single job with id and slug   =>  /api/v1/job/:id/:slug
 exports.getJob = CatchAsyncErrors(async (req, res, next) => {
@@ -126,23 +138,28 @@ exports.getStats = CatchAsyncErrors(async (req, res, next) => {
 //update job by id =>/api/v1/jobs/:id
 module.exports.updateJob = CatchAsyncErrors(async (req, res, next) => {
   const { id } = req.params
-  console.log(process.env.NODE_ENV)
+
   let job = await Job.findById(id)
 
   if (!job) {
     return next(new ErrorHandler("Job not found", 404))
-  } else {
-    job = await Job.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    })
-
-    res.status(200).json({
-      success: true,
-      message: "Job updated",
-      data: job
-    })
   }
+
+  // Check if the user is owner
+  if (job.user.toString() !== req.user.id && req.user.role !== "admin") {
+    return next(new ErrorHandler(`User(${req.user.id}) is not allowed to update this job.`))
+  }
+
+  job = await Job.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  })
+
+  res.status(200).json({
+    success: true,
+    message: "Job updated",
+    data: job
+  })
 })
 
 // Apply to job using Resume  =>  /api/v1/job/:id/apply
